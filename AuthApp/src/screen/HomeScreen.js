@@ -8,7 +8,7 @@ const HomeScreen=()=>{
         <AuthContext.Consumer>
             {(auth)=>(
                 <View>
-                    <Text style={styles.textstyle}>Welcome {auth.CurrentUser.name}</Text>
+                    <Text style={styles.textstyle}>Welcome {auth.currentUser.name}</Text>
                     <Button 
                     type="outline" 
                     title="Log Out"
