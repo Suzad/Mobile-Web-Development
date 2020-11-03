@@ -15,8 +15,6 @@ const NotificationScreen = (props) => {
            
             
             }}
-            
-
           />
           <Card>
             <View style={{ flexDirection: "row", alignItems: "center" }}>

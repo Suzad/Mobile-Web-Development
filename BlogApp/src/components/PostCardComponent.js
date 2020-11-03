@@ -1,15 +1,16 @@
 import React from "react";
 import { View } from "react-native";
-import { Card, Button, Text, Avatar } from "react-native-elements";
-import { AntDesign } from "@expo/vector-icons";
+import { Card, Text, Avatar } from "react-native-elements";
 
 const PostCard = (props) => {
+
   return (
     <Card>
       <View
         style={{
           flexDirection: "row",
-          alignItems: "center",
+          alignItems: "flex-start",
+          height:8,
         }}
       >
         <Avatar
@@ -30,15 +31,6 @@ const PostCard = (props) => {
       >
         {props.body}
       </Text>
-      {/*<Card.Divider />
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Button
-          type="outline"
-          title="  Like (17)"
-          icon={<AntDesign name="like2" size={24} color="dodgerblue" />}
-        />
-        <Button type="solid" title="Comment (10)" />
-      </View>*/}
     </Card>
   );
 };

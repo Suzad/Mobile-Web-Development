@@ -13,7 +13,7 @@ const storeDataJSON = async (key, value) => {
   try {
     const jsonValue = JSON.stringify(value);
     await AsyncStorage.setItem(key, jsonValue);
-    alert("Data Stored Successfully!");
+    //alert("Data Stored Successfully!");
   } catch (error) {
     alert(error);
   }
@@ -38,7 +38,7 @@ const getDataJSON = async (key) => {
       const jsonData = JSON.parse(data);
       return jsonData;
     } else {
-      alert("No data with this key!");
+      alert("No available data under this key! Make sure you enter correct info or Sign-Up First.");
     }
   } catch (error) {
     alert(error);
@@ -54,4 +54,4 @@ const removeData = async (key) => {
   }
 };
 
-export { storeData, storeDataJSON, getData, getDataJSON, removeData };
+export { storeData, storeDataJSON, getData, getDataJSON, removeData};

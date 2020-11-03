@@ -1,58 +1,180 @@
-import React, {useState} from "react";
-import { ScrollView, View, StyleSheet,FlatList} from "react-native";
-import {Card} from "react-native-elements";
-import PostCard from "../components/PostCardComponent";
-import InputCard from "../components/StoreDataComponent";
-
-import { storeDataJSON } from "../functions/AsyncStorageFunctions";
-import { getDataJSON } from "../functions/AsyncStorageFunctions";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, FlatList, ActivityIndicator, ScrollView, } from "react-native";
+import { Card } from "react-native-elements";
+import PostCardComponent from "./../components/PostCardComponent";
 
 import { AuthContext } from "../providers/AuthProvider";
-import HeaderHome from "../components/HeaderComponent";
+
+import { getDataJSON, removeData, storeDataJSON } from "../functions/AsyncStorageFunctions";
+import HeaderComponent from "./../components/HeaderComponent";
+import StoreDataComponent from "../components/StoreDataComponent";
+import { AsyncStorage } from "react-native";
+
 
 const PostScreen = (props) => {
-  //const postID = props.route.params.postId;
+  const postID = props.route.params.postId;
+  const [posts, setPosts] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [comments, setComments] = useState([]);
   const [input, setInput] = useState([]);
-  const [postID, setpostID] = useState([]);
+  const [commentID, setCommentID]=useState(0);
 
-  return (
+
+  const loadIndividualPost = async () => {
+    let response = await getDataJSON(JSON.stringify(postID));
+    if (response != null) {
+      return response;
+    }
+  };
+
+  const getAllData = async () => {
+    let data = []
+    try {
+      data = await AsyncStorage.getAllKeys();
+      if (data != null) {
+        return data;
+      } else {
+        alert("No data with this key!");
+      }
+    } catch (error) {
+      alert(error);
+    }
+  };
+
+  const getAllComments = async () => {
+    let keys = await getAllData();
+    let allComments = [];
+    try {
+        if (keys != null) {
+            for (let key of keys) {
+                if (key.includes('comment')) {
+                    let comment = await getDataJSON(key);
+                    allComments.push(comment);
+                }
+            }
+            return allComments;
+        }
+    } catch (error) {
+        alert(error);
+    }
+  }
+
+  const loadComments = async () => {
+    
+    let response = await getAllComments();
+    if (response != null) {
+      setComments(response);
+    }
+  };
+
+  useEffect(() => {
+    loadIndividualPost().then((response) => {
+      setPosts(JSON.parse(response));
+    });
+    loadComments();
+  }, []);
+
+    return (
       <AuthContext.Consumer>
         {(auth) => (
           <View style={styles.viewStyle}>
-            <HeaderHome
+            <HeaderComponent
               DrawerFunction={() => {
                 props.navigation.toggleDrawer();
               }}
             />
+
             <Card>
-            <PostCard author="John" title="the facade" body="Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."/>
+              <Card.Title>The post</Card.Title>
+              <PostCardComponent
+                author={posts.name}
+                body={posts.post}
+              />
             </Card>
+
+            {/*<ScrollView>
             <Card>
-              <InputCard
-               Text="Post a Comment"
-                currentFunc={setInput}
-                currentText={input}
-                pressFunction={async () => {
-                  let currentComment = {
-                    postId: postID,
-                    id: Math.random().toString(36),
-                    name: auth.CurrentUser.name,
-                    email: "",
-                    body: input,
-                  };
-                  storeDataJSON(
-                    JSON.stringify(postID),
-                    JSON.stringify(currentComment)
-                  );
-                  let UserData = await getDataJSON(JSON.stringify(postID));
-                  console.log(UserData);
-                }} />
+              <Card.Title>Comments for this post</Card.Title>
+              <FlatList
+                data={comments}
+                onRefresh={loadComments}
+                refreshing={loading}
+                renderItem={function ({ item }) {
+                  let data = JSON.parse(item);
+                  if (JSON.stringify(data.post) === JSON.stringify(postID)) {
+                    return (
+                      <View>
+                          <PostCardComponent
+                            author={data.commenter}
+                            body={data.comment}
+                          />
+                      </View>
+                    );
+                  }
+                }
+                }
+              />
             </Card>
+            </ScrollView>*/}
+            <Card>
+                <StoreDataComponent
+                  Text="Post a Comment"
+                  currentFunc={setInput}
+                  currentText={input}
+                  pressFunction={async () => {
+                      setCommentID(["comment" + Math.floor(Math.random()*255)]);
+                      let currentComment = {
+                        post: postID,
+                        reciever: posts.name,
+                        commentId:commentID,
+                        commneterID: auth.CurrentUser.username,
+                        commenter: auth.CurrentUser.name,
+                        comment: input,
+                      };
+                
+                      storeDataJSON(
+                        JSON.stringify(commentID),
+                        JSON.stringify(currentComment)
+                      );
+                
+                      alert("Comment Saved!")
+                      let UserData = await getDataJSON(JSON.stringify(commentID));
+                      console.log(UserData);
+                  }}
+                />
+            </Card>
+
+            <ScrollView>
+            <Card>
+              <Card.Title>Comments for this post</Card.Title>
+              <FlatList
+                data={comments}
+                onRefresh={loadComments}
+                refreshing={loading}
+                renderItem={function ({ item }) {
+                  let data = JSON.parse(item);
+                  if (JSON.stringify(data.post) === JSON.stringify(postID)) {
+                    return (
+                      <View>
+                          <PostCardComponent
+                            author={data.commenter}
+                            body={data.comment}
+                          />
+                      </View>
+                    );
+                  }
+                }
+                }
+              />
+            </Card>
+            </ScrollView>
+
           </View>
         )}
       </AuthContext.Consumer>
     );
-  } 
+ 
+};
 
 const styles = StyleSheet.create({
   textStyle: {
@@ -61,6 +183,11 @@ const styles = StyleSheet.create({
   },
   viewStyle: {
     flex: 1,
+  },
+  image: {
+    flex: 1,
+    resizeMode: "cover",
+    justifyContent: "center"
   },
 });
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Button, Input } from "react-native-elements";
+import { Button, Input } from "react-native-elements";
 import { Entypo } from "@expo/vector-icons";
 import { View } from "react-native";
 

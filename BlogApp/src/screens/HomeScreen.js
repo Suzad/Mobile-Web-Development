@@ -1,128 +1,159 @@
-import React, {useState} from "react";
-import {ScrollView, View, StyleSheet} from "react-native";
-import {Card} from "react-native-elements";
-
-import PostCard from "../components/PostCardComponent";
-import HeaderHome from "../components/HeaderComponent";
-import LikeCommentButton from "../components/LikeCommentComponent";
-import InputCard from "../components/StoreDataComponent";
-
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, FlatList} from "react-native";
+import { Card } from "react-native-elements";
 import { AuthContext } from "../providers/AuthProvider";
-
-
-import { storeDataJSON } from "../functions/AsyncStorageFunctions";
-import { getDataJSON } from "../functions/AsyncStorageFunctions";
-
+import PostCardComponent from "./../components/PostCardComponent";
+import HeaderComponent from "./../components/HeaderComponent";
+import StoreDataComponent from "../components/StoreDataComponent";
+import { AsyncStorage } from "react-native";
+import {getDataJSON,storeDataJSON} from "./../functions/AsyncStorageFunctions";
+import { Button } from "react-native-elements";
+import { AntDesign, FontAwesome } from "@expo/vector-icons";
 
 const HomeScreen = (props) => {
 
-  const [postID, setpostID] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [postID, setpostID] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [input, setInput] = useState([]);
 
-  const post =
-    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.";
 
-  return (
-    <AuthContext.Consumer>
-      {(auth) => (
-        <View style={styles.viewStyle}>
-          
-        <HeaderHome
-            DrawerFunction={() => {
+  const [count, setCount] = useState(0);
+  const [icon, setIcon] = useState(["like2"]);
+
+
+
+  const getAllData = async () => {
+    let data = []
+    try {
+      data = await AsyncStorage.getAllKeys();
+      if (data != null) {
+        return data;
+      } else {
+        alert("No data with this key!");
+      }
+    } catch (error) {
+      alert(error);
+    }
+  };
+
+  const getAllPosts = async () => {
+    let keys = await getAllData();
+    let allposts = [];
+    try {
+        if (keys != null) {
+            for (let key of keys) {
+                if (key.includes('post')) {
+                    let post = await getDataJSON(key);
+                    allposts.push(post);
+                }
+            }
+            return allposts;
+        }
+    } catch (error) {
+        alert(error);
+    }
+}
+
+  const loadPosts = async () => {
+    let response = await getAllPosts();
+    if (response != null) {
+      setPosts(response);
+    }
+  };
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+    return (
+      <AuthContext.Consumer>
+        {(auth) => (
+          <View style={styles.viewStyle}>
+            <HeaderComponent
+              DrawerFunction={() => {
                 props.navigation.toggleDrawer();
-            }}
-        />
-
-        <Card>
-            <InputCard
-                Text="What's On Your Mind?"
+              }}
+            />
+            <Card>
+              <StoreDataComponent
+                Text="What's On Your Mind ?"
                 currentFunc={setInput}
                 currentText={input}
                 pressFunction={async () => {
-                    let currentPost = {
-                        userId: auth.CurrentUser.name,
-                        Id: Math.random().toString(36).substring(7),
-                        title: " ",
-                        body: input,
-                    };
-                setpostID(currentPost.Id);
-                storeDataJSON(
-                  JSON.stringify(postID),
-                  JSON.stringify(currentPost)
+                  setpostID(["post"+Math.floor(Math.random()*255)]);
+                  let currentPost = {
+                    username: auth.CurrentUser.username,
+                    name: auth.CurrentUser.name,
+                    postID: postID,
+                    post: input,
+                    likes: 0,
+                  };
+                  storeDataJSON(
+                    JSON.stringify(postID),
+                    JSON.stringify(currentPost)
+                  );
+            
+                  alert("Post Saved!")
+                  let UserData = await getDataJSON(JSON.stringify(postID));
+                  console.log(UserData);
+                }}
+              />
+            </Card>
+            <FlatList
+              data={posts}
+              onRefresh={loadPosts}
+              refreshing={loading}
+              renderItem={function ({ item }) {
+                let data = JSON.parse(item)
+                return (
+                  <View>
+                    <Card>
+                      <PostCardComponent
+                        author={data.name}
+                        body={data.post}
+                      />
+                      <Card.Divider />
+<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <Button
+            type="outline"
+            title={`Like (${count})`}
+            icon={<AntDesign name={icon} size={24} color="dodgerblue" />}
+            onPress={function () {
+              if (icon== "like2") {
+                setCount(count + 1);
+                setIcon("like1")
+              }
+              else {
+                setCount(count - 1);
+                setIcon("like2");
+              }
+            }}
+          />
+          <Button
+            type="outline"
+            icon={<FontAwesome name="comment" size={24} color="dodgerblue" />}
+            title=" Comment"
+            onPress={() => {
+              props.navigation.navigate("PostScreen", {
+                postId: data.postID,
+              });
+            }}
+          />
+        </View>
+
+
+                    </Card>
+                  </View>
                 );
-                let UserData = await getDataJSON(JSON.stringify(postID));
-                console.log(UserData);
               }}
             />
-        </Card>
-        <ScrollView>
-                <Card>
-                    <PostCard author="John" title="The facade" body="Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."/>
-                    <Card.Divider />
-                    <LikeCommentButton
-                        postId="1"
-                        navigateFunc={() => {
-                            props.navigation.navigate("PostScreen", {
-                            postId: "1",
-                            });
-                        }}
-                    />
-                </Card>
-                <Card>
-                    <PostCard author="Zara" title="The Lodge" body="Six months after their mother's suicide, Aidan and Mia's father takes them for a family vacation to his girlfriend's lodge. None knows zilkod. However, things take a turn when they start experiencing strange events."/>
-                    <Card.Divider />
-                    <LikeCommentButton
-                        postId="2"
-                        navigateFunc={() => {
-                            props.navigation.navigate("PostScreen", {
-                            postId: "2",
-                            });
-                        }}
-                    />
-                </Card>
-                <Card>
-                    <PostCard author="Zil" title="The president" body="they see you from where you cannot see them. you can just feel their existence. you cannot run. everything will be finished."/>
-                    <Card.Divider />
-                    <LikeCommentButton
-                        postId="3"
-                        navigateFunc={() => {
-                            props.navigation.navigate("PostScreen", {
-                            postId: "3",
-                            });
-                        }}
-                    />
-                </Card>
-                <Card>
-                    <PostCard author="Harry" title="unknown" body="they will catch you soon. you cannot escape except for one condition. you have to submit yourself. you know how."/>
-                    <Card.Divider />
-                    <LikeCommentButton
-                        postId="4"
-                        navigateFunc={() => {
-                            props.navigation.navigate("PostScreen", {
-                            postId: "4",
-                            });
-                        }}
-                    />
-                </Card>
-                <Card>
-                    <PostCard author="Trump" title="Election" body="Campaigning in Miami, the Democratic presidential candidate signaled an intent to advance a more forceful critique of the president, just days after dialing back his attacks while Trump battled his illness at Walter Reed National Military Medical Center and his prognosis was clouded in uncertainty."/>
-                    <Card.Divider />
-                    <LikeCommentButton
-                        postId="5"
-                        navigateFunc={() => {
-                            props.navigation.navigate("PostScreen", {
-                            postId: "5",
-                            });
-                        }}
-                    />
-                </Card>
-        </ScrollView>
-        </View>
-      )}
-    </AuthContext.Consumer>
-  );
-}
-
+          </View>
+        )}
+      </AuthContext.Consumer>
+    );
+   
+};
 
 const styles = StyleSheet.create({
   textStyle: {
@@ -131,6 +162,11 @@ const styles = StyleSheet.create({
   },
   viewStyle: {
     flex: 1,
+  },
+  image: {
+    flex: 1,
+    resizeMode: "cover",
+    justifyContent: "center"
   },
 });
 
