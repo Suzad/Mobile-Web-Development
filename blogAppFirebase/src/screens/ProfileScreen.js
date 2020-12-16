@@ -70,7 +70,7 @@ const ProfileScreen = (props) => {
 							<Button
 								title=" Delete Account"
 								type="solid"
-								/*onPress={async function () {
+								onPress={async function () {
 									firebase
 										.firestore()
 										.collection("posts")
@@ -93,7 +93,7 @@ const ProfileScreen = (props) => {
 
 									auth.setIsLoggedIn(false);
 									auth.setCurrentUser({});
-								}}*/
+								}}
 							/>
 						</View>
 					</Card>

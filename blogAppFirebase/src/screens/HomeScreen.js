@@ -113,10 +113,10 @@ const HomeScreen = (props) => {
 										likes: [],
 										comments: [],
 									})
-									.then(() => {
+									.then((docRef) => {
 										setLoading(false);
-										alert("post created successfully!");
-										//alert()
+										//alert("post created successfully!");
+										alert(docRef.id);
 									})
 									.catch((error) => {
 										setLoading(false);
